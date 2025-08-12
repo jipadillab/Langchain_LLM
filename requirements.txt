@@ -1,5 +1,6 @@
 streamlit
 langchain
 langchain-community
-huggingface_hub # Para interactuar con la API de Hugging Face
-pydantic==2.7.1 # Pinning pydantic version for compatibility with langchain-community
+huggingface_hub
+pydantic==2.7.1
+
