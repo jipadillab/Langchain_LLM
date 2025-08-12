@@ -2,7 +2,7 @@ import streamlit as st
 from langchain_community.llms import HuggingFaceHub
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains import LLMChain
-import os
+import os # Necesario para interactuar con variables de entorno
 
 # --- Configuración de la página ---
 st.set_page_config(
@@ -17,31 +17,33 @@ st.write("¡Hola! Soy tu asistente agrícola impulsado por IA, ahora desde la nu
          "Pregúntame sobre cultivos, plagas, suelos, fertilizantes y más.")
 
 # --- Configuración de Hugging Face ---
-# **ADVERTENCIA DE SEGURIDAD:**
-# Nunca incluyas tu token directamente en el código fuente en un repositorio público.
-# Para despliegues reales, usa os.environ.get("HUGGINGFACEHUB_API_TOKEN")
-# o los secretos de Streamlit (st.secrets["HUGGINGFACEHUB_API_TOKEN"]).
-# Aquí lo incluimos directamente para fines de prueba y demostración.
-HUGGINGFACEHUB_API_TOKEN = "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"
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = HUGGINGFACEHUB_API_TOKEN
+# **MANEJO SEGURO DEL TOKEN:**
+# Streamlit Community Cloud permite usar st.secrets para variables de entorno.
+# No pegues tu token directamente aquí. Lo configuraremos en el panel de Streamlit Cloud.
+# Esto intentará leer el token de los secretos de Streamlit o de una variable de entorno local.
+try:
+    hf_api_token = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
+except KeyError:
+    hf_api_token = os.environ.get("HUGGINGFACEHUB_API_TOKEN")
 
-# Modelos recomendados y GRATUITOS de Hugging Face para LangChain:
-# Puedes buscar más en Hugging Face Hub que sean compatibles con text-generation.
-# Modelos buenos y relativamente pequeños para empezar (pueden ser lentos en la versión gratuita):
-# - google/flan-t5-xxl (grande, pero un buen ejemplo de LLM)
-# - google/flan-t5-base (más pequeño y rápido)
-# - gpt2 (muy básico, solo para probar la conexión)
-# - microsoft/DialoGPT-medium (diseñado para chat, pero no para instrucciones complejas)
+if not hf_api_token:
+    st.error("Error: Token de Hugging Face API no configurado. "
+             "Por favor, añade 'HUGGINGFACEHUB_API_TOKEN' a tus secretos de Streamlit "
+             "o como una variable de entorno.")
+    st.stop()
 
-# Recomendación: Empieza con un modelo como 'google/flan-t5-base' o 'HuggingFaceH4/zephyr-7b-beta'
-# (este último puede ser más lento si no tienes acceso a inferencia acelerada)
-# Para este ejemplo, usaremos 'google/flan-t5-base' por su disponibilidad general y tamaño manejable.
-repo_id = "google/flan-t5-base"
+# Configura la variable de entorno para LangChain
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = hf_api_token
+
+# Modelo de Hugging Face. 'google/flan-t5-base' es una buena opción gratuita y de propósito general.
+# Considera que los modelos grandes como Llama 2 o Mistral pueden ser muy lentos o no funcionar
+# en la inferencia gratuita de Hugging Face.
+repo_id = "google/flan-t5-base" # Puedes cambiarlo por "google/flan-t5-large" si quieres algo más potente (puede ser más lento)
 
 try:
     llm = HuggingFaceHub(
         repo_id=repo_id,
-        model_kwargs={"temperature": 0.5, "max_length": 500} # Ajusta la temperatura y la longitud máxima
+        model_kwargs={"temperature": 0.5, "max_length": 500} # Ajusta la creatividad y la longitud de la respuesta
     )
 except Exception as e:
     st.error(f"Error al conectar con Hugging Face Hub. Asegúrate de que tu token es válido "
@@ -112,8 +114,8 @@ st.sidebar.write("Desarrollado con ❤️ para la comunidad agrícola.")
 st.sidebar.header("Consideraciones de Hugging Face")
 st.sidebar.markdown(
     """
-    1.  **Token de API:** Asegúrate de que tu token de Hugging Face (`HF_TOKEN` o `HUGGINGFACEHUB_API_TOKEN`) esté configurado correctamente.
-    2.  **Modelos Gratuitos:** La inferencia gratuita en Hugging Face puede ser lenta o tener límites de uso. Considera modelos más pequeños para mejor rendimiento.
+    1.  **Token de API:** Asegúrate de que tu token de Hugging Face (`HUGGINGFACEHUB_API_TOKEN`) esté configurado correctamente en los secretos de Streamlit.
+    2.  **Modelos Gratuitos:** La inferencia gratuita en Hugging Face puede ser lenta o tener límites de uso. Considera modelos más pequeños para un mejor rendimiento.
     3.  **Tipo de Modelo:** El modelo (`repo_id`) debe ser apto para "text generation" o "conversational" para funcionar bien como asistente. `google/flan-t5-base` es un buen punto de partida.
     """
 )
