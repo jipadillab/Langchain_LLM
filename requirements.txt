@@ -3,4 +3,3 @@ langchain
 langchain-community
 huggingface_hub
 pydantic==2.7.1
-
